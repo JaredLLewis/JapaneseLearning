@@ -1,0 +1,207 @@
+<html>
+<head>
+<script src="https://code.jquery.com/jquery-3.5.1.js" integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc=" crossorigin="anonymous"></script>
+<script src="scripts/wanakana.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js" integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E=" crossorigin="anonymous"></script>
+</head>
+<style>
+#japaneseCharacterShow, #resultsContainer {
+margin-top:10%;
+}
+
+.text-line {
+    color: black;
+    padding: 3px 10px;
+	margin-top:-100px;
+	width:30%;
+}
+
+#japaneseCharacterShow .japCharacter {
+font-size:150px;
+padding:30px;
+}
+#japaneseCharacterShow .engCharacter {
+font-size:40px;
+}
+.red {
+color:red;
+}
+#wordSpelled {
+font-weight:bold;
+display: inline-block;
+width:300px;
+height:10px;
+}
+
+</style>
+<script>
+    var words = {
+  "like" : "すき",
+  "house" : "いえ",
+  "dog" : "いぬ",
+  "yes" : "はい",
+  "thank you" : "ありがとう",
+  "foot":"あし",
+  "heel":"かかと",
+  "mother":"はは",
+  "wife":"つま",
+  "eagle":"わし",
+  "insect":"むし"
+  
+};
+
+</script>
+
+
+
+<script>
+
+var currentJapaneseWord = "";
+var currentJapaneseCharacter = "";
+var currentJapaneseAnswer = "";
+var characterAt = 0;
+var errorAnswer = false;
+var timer = "";
+var wrongCount = 0;
+var scoreCount = 0;
+var wordCount = -1;
+
+function refreshScoreAndWordCounts() {
+$('#scoreCount').text('Score: ' + scoreCount);
+$('#wordsCount').text('Words Solved: ' + wordCount);
+}
+function getKeyByValue(object, value) {
+  return Object.keys(object).find(key => object[key] === value);
+}
+
+var randomProperty = function (obj) {
+    var keys = Object.keys(obj);
+    return obj[keys[ keys.length * Math.random() << 0]];
+};
+function appendJapaneseAnswer(warning) {
+var charShowDiv = $('#japaneseCharacterShow');
+if (warning && errorAnswer == false) {
+charShowDiv.append('<span class="engCharacter red">(' + currentJapaneseAnswer + ')</span>');
+}
+else if ((!warning) && errorAnswer) {
+errorAnswer = false;
+return;
+}
+else {
+charShowDiv.append('<span class="engCharacter">(' + currentJapaneseAnswer + ')</span>');
+
+}
+
+}
+
+
+function refreshCurrentJapaneseCharacters() {
+if ((characterAt + 1) > currentJapaneseWord.length) {
+characterAt = 0;
+$("#nextWord").css('visibility', 'visible');
+$("#answerInput").attr("disabled", "disabled");
+getEnglishValueOnSuccess();
+return;
+}
+currentJapaneseCharacter = currentJapaneseWord.charAt(characterAt);
+currentJapaneseAnswer = wanakana.toRomaji(currentJapaneseCharacter);
+characterAt++;
+$('#japaneseCharacterShow')
+    .append($('<span class="japCharacter">' + currentJapaneseCharacter + '</span>')
+        .hide()
+        .fadeIn(1000)
+    );
+	
+	
+}
+
+function generateWord() {
+wordCount++;
+refreshScoreAndWordCounts();
+var charShowDiv = $('#japaneseCharacterShow');
+charShowDiv.html('');
+
+var wordToLoad = randomProperty(words);
+currentJapaneseWord = wordToLoad;
+}
+
+function getEnglishValueOnSuccess() {
+var englishValue = getKeyByValue(words,currentJapaneseWord);
+$("#wordSpelled").text('You spelled the word: ' + englishValue);
+}
+
+
+
+$( document ).ready(function() {
+
+
+
+//var romaji = wanakana.toRomaji(wordToLoad);
+
+
+generateWord();
+refreshCurrentJapaneseCharacters();
+
+
+//var englishValue = getKeyByValue(words,wordToLoad);
+$( "#nextWord" ).click(function() {
+$("#wordSpelled").text('');
+  generateWord();
+refreshCurrentJapaneseCharacters();
+$("#answerInput").removeAttr("disabled");
+$("#nextWord").css('visibility', 'hidden');
+});
+
+$('#answerInput').on('input', function() {
+    var input = $("#answerInput").val();
+	if (input == currentJapaneseAnswer) {
+	scoreCount++;
+	refreshScoreAndWordCounts();
+	wrongCount = 0;
+	$("#answerInput").val('');
+	appendJapaneseAnswer(false);
+	refreshCurrentJapaneseCharacters();
+	
+	}
+	else if (currentJapaneseAnswer.length == input.length && input != currentJapaneseAnswer) {
+	//	alert("Not right!");
+	$("#answerInput").effect("shake");
+	$("#answerInput").val('');
+	wrongCount++;
+	if (wrongCount > 1) {
+	scoreCount--;
+	refreshScoreAndWordCounts();
+	appendJapaneseAnswer(true);
+			errorAnswer = true;
+	}
+	}
+});
+
+$(document).keypress(function (e) {
+ var key = e.which;
+ if(key == 13)  // the enter key code
+  {
+  if ($("#nextWord").css("visibility") === "visible") {
+      $('#nextWord').click();
+    return false;  
+  }
+  }
+});   
+
+
+
+});
+</script>
+<body>
+<p id="scoreCount">Score: </p>
+<p id="wordsCount">Words Solved: </p>
+<div id="japaneseCharacterShow">
+
+</div>
+<p id="wordSpelled"></p>
+<div id="resultsContainer">
+<input type="text" id="answerInput"  max-length="3" class="text-line" />
+<button id="nextWord" style="visibility:hidden">Next Word</button>
+</div>
+</body>
+</html>
